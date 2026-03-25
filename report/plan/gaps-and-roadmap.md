@@ -1,6 +1,6 @@
 # Анализ пробелов и план доработки системы Runner
 
-> Дата анализа: 08.04.2026
+> Дата анализа: 08.04.2026 (обновлено 09.04.2026)
 > Основание: ревью всех файлов проекта после рефакторинга на 4-модульную архитектуру
 
 ---
@@ -13,12 +13,35 @@
 | Runner.SharedKernel | ✅ Реализован | ~70 % |
 | Runner.Auth.Module | ✅ Реализован | ~90 % |
 | Runner.Parsers.Module | ✅ Реализован | ~95 % |
-| Runner.Runner.Module | ✅ Реализован | ~90 % |
+| Runner.Runner.Module | ✅ Реализован | ~95 % |
 | Runner.Submissions.Module | ✅ Реализован | ~80 % |
 | Runner.ProTech.Module | ❌ Не создан (планируемый) | 0 % |
-| Регистрация Runner + Parsers в Program.cs | ⚠️ Не подключены | 0 % |
-| Миграция для TemplateRepoUrl | ❌ Отсутствует | 0 % |
+| PipelinePollerWorker (polling) | ✅ Реализован | ~100 % |
+| WebhookEndpoints (push) | ⚠️ Реализован, не подключён к GitLab | ~80 % |
 | Автоматизированные тесты | ❌ Отсутствуют | 0 % |
+
+---
+
+### Получение результатов пайплайна: Polling vs Webhook
+
+**Текущий подход (polling):** `PipelinePollerWorker` — фоновый сервис, который каждые N секунд
+опрашивает GitLab API для submissions в статусе `Triggered`/`Running`:
+1. `GET /api/v4/projects/{id}/pipelines/{pipelineId}` → статус пайплайна
+2. `GET /api/v4/projects/{id}/pipelines/{pipelineId}/jobs` → список job-ов
+3. `GET /api/v4/projects/{id}/jobs/{jobId}/artifacts/TestResult.xml` → артефакт
+4. Парсинг NUnit XML → сохранение в БД
+
+**Преимущества polling:** не требует настройки webhook в GitLab, работает за NAT/firewall.
+
+**Планируемый подход (webhook):** GitLab отправляет `POST /api/webhooks/gitlab` при завершении
+пайплайна. Endpoint уже реализован (`WebhookEndpoints.cs`, `ProcessGitLabWebhookHandler.cs`),
+но требует:
+- Настройки webhook в GitLab (Settings → Webhooks → Pipeline events)
+- Сетевой доступности Runner API из GitLab (обратный маршрут)
+- Совпадения секретного токена (`GitLab:WebhookSecret`)
+
+**Рекомендация:** в продакшене использовать оба подхода — webhook как основной механизм
+(мгновенная реакция), polling как fallback (на случай потери webhook).
 
 ---
 

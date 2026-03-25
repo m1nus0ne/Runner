@@ -27,15 +27,16 @@ public static class RunnerModuleExtensions
             var opts = configuration
                 .GetSection(GitLabOptions.SectionName)
                 .Get<GitLabOptions>() ?? new();
-            client.BaseAddress = new Uri(opts.BaseUrl);
+            client.BaseAddress = new Uri(opts.BaseUrl.TrimEnd('/') + "/");
             client.DefaultRequestHeaders.Add("PRIVATE-TOKEN", opts.ServiceToken);
         });
 
         // Use-case handlers
         services.AddScoped<ProcessGitLabWebhookHandler>();
 
-        // Background worker
+        // Background workers
         services.AddHostedService<OutboxWorker>();
+        services.AddHostedService<PipelinePollerWorker>();
 
         return services;
     }
