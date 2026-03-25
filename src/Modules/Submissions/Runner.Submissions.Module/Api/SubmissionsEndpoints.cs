@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Routing;
 using Runner.Submissions.Module.Application.UseCases.CreateSubmission;
 using Runner.Submissions.Module.Application.UseCases.GetSubmission;
 using Runner.Submissions.Module.Application.UseCases.GetSubmissionReport;
+using Runner.Submissions.Module.Application.UseCases.ListMySubmissions;
 
 namespace Runner.Submissions.Module.Api;
 
@@ -13,6 +14,36 @@ internal static class SubmissionsEndpoints
     public static IEndpointRouteBuilder MapSubmissionsEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/submissions").RequireAuthorization();
+
+        // GET /submissions/my — все попытки ученика (опциональная фильтрация по assignmentId)
+        group.MapGet("/my", async (
+            Guid? assignmentId,
+            ClaimsPrincipal user,
+            ListMySubmissionsHandler handler,
+            CancellationToken ct) =>
+        {
+            var studentId = user.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? throw new UnauthorizedAccessException();
+
+            var list = await handler.HandleAsync(
+                new ListMySubmissionsQuery(studentId, assignmentId), ct);
+            return Results.Ok(list);
+        });
+
+        // GET /submissions/my/recent?limit=5 — последние N попыток для сайдбара
+        group.MapGet("/my/recent", async (
+            int? limit,
+            ClaimsPrincipal user,
+            ListMySubmissionsHandler handler,
+            CancellationToken ct) =>
+        {
+            var studentId = user.FindFirstValue(ClaimTypes.NameIdentifier)
+                ?? throw new UnauthorizedAccessException();
+
+            var list = await handler.HandleAsync(
+                new ListMySubmissionsQuery(studentId, Limit: limit ?? 5), ct);
+            return Results.Ok(list);
+        });
 
         // POST /submissions — студент создаёт отправку
         group.MapPost("/", async (

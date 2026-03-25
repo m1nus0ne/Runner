@@ -68,12 +68,12 @@ export default function CreateAssignmentModal({ open, onClose, onCreated }: Prop
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>Создать задание</h2>
-          <button className="modal-close" onClick={handleClose}>✕</button>
+          <button className="modal-close" onClick={handleClose}>&times;</button>
         </div>
 
         {result ? (
           <div className="modal-body">
-            <p className="success-msg">✅ Задание создано!</p>
+            <p className="success-msg">Задание создано!</p>
             <label>
               <span>Ссылка на задание</span>
               <div className="copy-field">
@@ -83,7 +83,7 @@ export default function CreateAssignmentModal({ open, onClose, onCreated }: Prop
                   className="copy-btn"
                   onClick={() => navigator.clipboard.writeText(fullLink)}
                 >
-                  📋
+                  Копировать
                 </button>
               </div>
             </label>

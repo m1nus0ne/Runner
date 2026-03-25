@@ -20,6 +20,18 @@ export interface SubmissionDto {
   totalTests: number | null;
 }
 
+export interface MySubmissionDto {
+  id: string;
+  assignmentId: string;
+  assignmentTitle: string;
+  gitHubUrl: string;
+  branch: string;
+  status: string;
+  createdAt: string;
+  passedTests: number | null;
+  totalTests: number | null;
+}
+
 export interface SubmissionReportDto {
   submissionId: string;
   status: string;
@@ -104,6 +116,12 @@ export const api = {
     }),
   getSubmission: (id: string) => request<SubmissionDto>(`/api/submissions/${id}`),
   getSubmissionReport: (id: string) => request<SubmissionReportDto>(`/api/submissions/${id}/report`),
+  getMySubmissions: (assignmentId?: string) =>
+    request<MySubmissionDto[]>(
+      `/api/submissions/my${assignmentId ? `?assignmentId=${assignmentId}` : ''}`
+    ),
+  getMyRecentSubmissions: (limit = 5) =>
+    request<MySubmissionDto[]>(`/api/submissions/my/recent?limit=${limit}`),
 };
 
 

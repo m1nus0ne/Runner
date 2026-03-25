@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import AssignmentsPage from './pages/AssignmentsPage';
 import SubmitPage from './pages/SubmitPage';
 import SubmissionPage from './pages/SubmissionPage';
 import AuthCallbackPage from './pages/AuthCallbackPage';
+import MySubmissionsPage from './pages/MySubmissionsPage';
+import RecentSubmissionsSidebar from './components/RecentSubmissionsSidebar';
 import { api, type AuthUser } from './api';
 import './App.css';
 
@@ -30,7 +32,15 @@ export default function App() {
   return (
     <BrowserRouter>
       <header className="app-header">
-        <a href="/" className="logo">🏃 Runner</a>
+        <div className="header-left">
+          <a href="/" className="logo">Runner</a>
+          {user && (
+            <nav className="header-nav">
+              <Link to="/">Задания</Link>
+              <Link to="/my-submissions">Мои попытки</Link>
+            </nav>
+          )}
+        </div>
         <div className="header-right">
           {loading ? null : user ? (
             <>
@@ -54,14 +64,18 @@ export default function App() {
           )}
         </div>
       </header>
-      <main>
-        <Routes>
-          <Route path="/" element={<AssignmentsPage />} />
-          <Route path="/assignments/:id" element={<SubmitPage />} />
-          <Route path="/submissions/:id" element={<SubmissionPage />} />
-          <Route path="/auth/callback" element={<AuthCallbackPage />} />
-        </Routes>
-      </main>
+      <div className="app-layout">
+        <main className="app-main">
+          <Routes>
+            <Route path="/" element={<AssignmentsPage />} />
+            <Route path="/assignments/:id" element={<SubmitPage />} />
+            <Route path="/submissions/:id" element={<SubmissionPage />} />
+            <Route path="/my-submissions" element={<MySubmissionsPage />} />
+            <Route path="/auth/callback" element={<AuthCallbackPage />} />
+          </Routes>
+        </main>
+        {user && <RecentSubmissionsSidebar />}
+      </div>
     </BrowserRouter>
   );
 }

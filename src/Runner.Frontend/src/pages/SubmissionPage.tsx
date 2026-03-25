@@ -2,14 +2,14 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { api, type SubmissionDto, type SubmissionReportDto } from '../api';
 
-const STATUS_LABELS: Record<string, { label: string; emoji: string }> = {
-  Pending:    { label: 'Ожидание',    emoji: '⏳' },
-  Triggered:  { label: 'Запущен',     emoji: '🚀' },
-  Running:    { label: 'Выполняется', emoji: '⚙️' },
-  Passed:     { label: 'Пройдено',    emoji: '✅' },
-  Failed:     { label: 'Не пройдено', emoji: '❌' },
-  Error:      { label: 'Ошибка',      emoji: '💥' },
-  Timeout:    { label: 'Тайм-аут',    emoji: '⏰' },
+const STATUS_LABELS: Record<string, string> = {
+  Pending:    'Ожидание',
+  Triggered:  'Запущен',
+  Running:    'Выполняется',
+  Passed:     'Пройдено',
+  Failed:     'Не пройдено',
+  Error:      'Ошибка',
+  Timeout:    'Тайм-аут',
 };
 
 const ERROR_TYPE_LABELS: Record<string, string> = {
@@ -76,7 +76,7 @@ export default function SubmissionPage() {
   if (error) return <p className="error">Ошибка: {error}</p>;
   if (!submission) return <p className="error">Отправка не найдена.</p>;
 
-  const status = STATUS_LABELS[submission.status] ?? { label: submission.status, emoji: '❓' };
+  const statusLabel = STATUS_LABELS[submission.status] ?? submission.status;
 
   return (
     <div className="page">
@@ -85,10 +85,12 @@ export default function SubmissionPage() {
       <h1>Результат проверки</h1>
 
       <div className="status-card">
-        <span className="status-emoji">{status.emoji}</span>
+        <div>
+          <span className={`status-dot status-dot--${submission.status.toLowerCase()}`} />
+        </div>
         <div>
           <h2 className={`status-text status--${submission.status.toLowerCase()}`}>
-            {status.label}
+            {statusLabel}
           </h2>
           {submission.totalTests != null && (
             <p className="tests-summary">
@@ -109,7 +111,7 @@ export default function SubmissionPage() {
       </div>
 
       {!isTerminal(submission.status) && (
-        <p className="polling-hint">🔄 Автоматическое обновление каждые 3 секунды…</p>
+        <p className="polling-hint">Автоматическое обновление каждые 3 секунды…</p>
       )}
 
       {report && report.groups.length > 0 && (

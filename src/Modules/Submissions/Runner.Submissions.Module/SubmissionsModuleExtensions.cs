@@ -10,6 +10,7 @@ using Runner.Submissions.Module.Application.UseCases.CreateSubmission;
 using Runner.Submissions.Module.Application.UseCases.GetAssignment;
 using Runner.Submissions.Module.Application.UseCases.GetSubmission;
 using Runner.Submissions.Module.Application.UseCases.GetSubmissionReport;
+using Runner.Submissions.Module.Application.UseCases.ListMySubmissions;
 using Runner.Submissions.Module.Infrastructure.Database;
 
 namespace Runner.Submissions.Module;
@@ -32,6 +33,7 @@ public static class SubmissionsModuleExtensions
         services.AddScoped<GetAssignmentHandler>();
         services.AddScoped<GetSubmissionHandler>();
         services.AddScoped<GetSubmissionReportHandler>();
+        services.AddScoped<ListMySubmissionsHandler>();
 
         return services;
     }

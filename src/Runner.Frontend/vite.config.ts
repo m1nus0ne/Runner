@@ -6,10 +6,7 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      '/auth': 'http://localhost:8080',
-      '/assignments': 'http://localhost:8080',
-      '/submissions': 'http://localhost:8080',
-      '/webhooks': 'http://localhost:8080',
+      '/api': 'http://localhost:8080',
     },
   },
 })

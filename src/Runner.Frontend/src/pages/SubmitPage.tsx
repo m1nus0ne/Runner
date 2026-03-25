@@ -1,11 +1,21 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { api, type AssignmentDto, type AuthUser, type GitHubRepo, type GitHubBranch } from '../api';
+import { api, type AssignmentDto, type AuthUser, type GitHubRepo, type GitHubBranch, type MySubmissionDto } from '../api';
 
 const TYPE_LABELS: Record<string, string> = {
   Algorithm: 'Алгоритм',
   Endpoint: 'REST API',
   Coverage: 'Покрытие тестами',
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  Pending:   'Ожидание',
+  Triggered: 'Запущен',
+  Running:   'Выполняется',
+  Passed:    'Пройдено',
+  Failed:    'Не пройдено',
+  Error:     'Ошибка',
+  Timeout:   'Тайм-аут',
 };
 
 const API_BASE = import.meta.env.VITE_API_URL ?? '';
@@ -40,6 +50,9 @@ export default function SubmitPage() {
   const [submitError, setSubmitError] = useState('');
   const [cloneCopied, setCloneCopied] = useState(false);
 
+  // past attempts for this assignment
+  const [pastSubmissions, setPastSubmissions] = useState<MySubmissionDto[]>([]);
+
   const gitCloneCmd = assignment?.templateRepoUrl
     ? `git clone ${assignment.templateRepoUrl}`
     : '';
@@ -57,6 +70,11 @@ export default function SubmitPage() {
       .then(setAssignment)
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
+
+    // load past attempts for this assignment
+    api.getMySubmissions(id)
+      .then(setPastSubmissions)
+      .catch(() => {});
   }, [id]);
 
   // Load user, then decide mode & load repos
@@ -157,7 +175,7 @@ export default function SubmitPage() {
 
       {assignment.templateRepoUrl && (
         <div className="template-block">
-          <h3>📁 Шаблонный репозиторий</h3>
+          <h3>Шаблонный репозиторий</h3>
           <a
             href={assignment.templateRepoUrl}
             target="_blank"
@@ -175,7 +193,7 @@ export default function SubmitPage() {
               onClick={copyCloneCmd}
               title="Копировать"
             >
-              {cloneCopied ? '✅' : '📋'}
+              {cloneCopied ? 'Скопировано' : 'Копировать'}
             </button>
           </div>
 
@@ -246,7 +264,7 @@ export default function SubmitPage() {
           <>
             {!hasToken && (
               <p className="hint" style={{ marginBottom: '1rem' }}>
-                💡 <a href={`${API_BASE}/api/auth/login?returnUrl=${encodeURIComponent(window.location.pathname)}`}>
+                <a href={`${API_BASE}/api/auth/login?returnUrl=${encodeURIComponent(window.location.pathname)}`}>
                   Войдите через GitHub
                 </a>{' '}
                 для автоматического выбора репозитория и ветки из вашего аккаунта.
@@ -293,6 +311,53 @@ export default function SubmitPage() {
           {submitting ? 'Отправка…' : 'Отправить на проверку'}
         </button>
       </form>
+
+      {/* Past attempts for this assignment */}
+      {pastSubmissions.length > 0 && (
+        <div className="past-attempts">
+          <h2>Мои попытки по заданию</h2>
+          <div className="submissions-table-wrap">
+            <table className="submissions-table">
+              <thead>
+                <tr>
+                  <th>Статус</th>
+                  <th>Тесты</th>
+                  <th>Ветка</th>
+                  <th>Дата</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {pastSubmissions.map((s) => {
+                  const st = STATUS_LABELS[s.status] ?? s.status;
+                  return (
+                    <tr key={s.id} className={`sub-row sub-row--${s.status.toLowerCase()}`}>
+                      <td>
+                        <span className="sub-status">
+                          <span className={`status-dot status-dot--${s.status.toLowerCase()}`} />
+                          {st}
+                        </span>
+                      </td>
+                      <td>
+                        {s.totalTests != null
+                          ? `${s.passedTests ?? 0} / ${s.totalTests}`
+                          : '—'}
+                      </td>
+                      <td><code>{s.branch}</code></td>
+                      <td>{new Date(s.createdAt).toLocaleString('ru-RU')}</td>
+                      <td>
+                        <Link to={`/submissions/${s.id}`} className="btn-sm">
+                          Подробнее →
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -28,7 +28,7 @@ export default function AuthCallbackPage() {
 
   return (
     <div className="page" style={{ textAlign: 'center', paddingTop: '4rem' }}>
-      <p className="loading">🔐 Авторизация…</p>
+      <p className="loading">Авторизация…</p>
     </div>
   );
 }
