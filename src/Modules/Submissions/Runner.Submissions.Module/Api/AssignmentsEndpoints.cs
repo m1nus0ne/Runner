@@ -37,7 +37,6 @@ internal static class AssignmentsEndpoints
         group.MapPost("/", async (
             CreateAssignmentRequest req,
             CreateAssignmentHandler handler,
-            HttpRequest httpRequest,
             CancellationToken ct) =>
         {
             var id = await handler.HandleAsync(

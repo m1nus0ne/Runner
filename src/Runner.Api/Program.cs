@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Diagnostics;
 using Scalar.AspNetCore;
 using Runner.SharedKernel;
@@ -7,6 +8,12 @@ using Runner.Runner.Module;
 using Runner.Submissions.Module;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// ── JSON ─────────────────────────────────────────────────────────────────────
+builder.Services.ConfigureHttpJsonOptions(opt =>
+{
+    opt.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
 
 // ── OpenAPI ──────────────────────────────────────────────────────────────────
 builder.Services.AddOpenApi();

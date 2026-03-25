@@ -21,6 +21,17 @@ export default function SubmitPage() {
   const [branch, setBranch] = useState('main');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [cloneCopied, setCloneCopied] = useState(false);
+
+  const gitCloneCmd = assignment?.templateRepoUrl
+    ? `git clone ${assignment.templateRepoUrl}`
+    : '';
+
+  const copyCloneCmd = () => {
+    navigator.clipboard.writeText(gitCloneCmd);
+    setCloneCopied(true);
+    setTimeout(() => setCloneCopied(false), 2000);
+  };
 
   useEffect(() => {
     if (!id) return;
@@ -81,6 +92,19 @@ export default function SubmitPage() {
           >
             {assignment.templateRepoUrl}
           </a>
+
+          <div className="clone-field">
+            <code>{gitCloneCmd}</code>
+            <button
+              type="button"
+              className="copy-btn"
+              onClick={copyCloneCmd}
+              title="Копировать"
+            >
+              {cloneCopied ? '✅' : '📋'}
+            </button>
+          </div>
+
           <p className="hint">
             Создайте свой репозиторий на основе этого шаблона, выполните задание,
             затем отправьте ссылку ниже.
