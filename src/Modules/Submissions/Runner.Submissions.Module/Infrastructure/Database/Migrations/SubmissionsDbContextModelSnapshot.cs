@@ -35,6 +35,10 @@ namespace Runner.Submissions.Module.Infrastructure.Database.Migrations
                     b.Property<long>("GitLabProjectId")
                         .HasColumnType("bigint");
 
+                    b.Property<string>("TemplateRepoUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasMaxLength(200)

@@ -2,6 +2,8 @@ using Microsoft.AspNetCore.Diagnostics;
 using Scalar.AspNetCore;
 using Runner.SharedKernel;
 using Runner.Auth.Module;
+using Runner.Parsers.Module;
+using Runner.Runner.Module;
 using Runner.Submissions.Module;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -11,6 +13,12 @@ builder.Services.AddOpenApi();
 
 // ── Auth Module ──────────────────────────────────────────────────────────────
 builder.Services.AddAuthModule(builder.Configuration);
+
+// ── Parsers Module ───────────────────────────────────────────────────────────
+builder.Services.AddParsersModule();
+
+// ── Runner Module ────────────────────────────────────────────────────────────
+builder.Services.AddRunnerModule(builder.Configuration);
 
 // ── Submissions Module ───────────────────────────────────────────────────────
 builder.Services.AddSubmissionsModule(builder.Configuration);
@@ -48,6 +56,7 @@ app.UseExceptionHandler(errApp => errApp.Run(async ctx =>
 // ── Module endpoints ─────────────────────────────────────────────────────────
 app.MapAuthModuleEndpoints(app.Environment);
 app.MapSubmissionsModuleEndpoints();
+app.MapRunnerModuleEndpoints();
 
 // ── Migrations on startup ────────────────────────────────────────────────────
 await app.Services.MigrateSubmissionsDbAsync();

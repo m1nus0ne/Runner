@@ -1,4 +1,16 @@
 services:
+  runner-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - runner-api
+    restart: unless-stopped
+    networks:
+      - internal
+
   runner-api:
     build:
       context: .

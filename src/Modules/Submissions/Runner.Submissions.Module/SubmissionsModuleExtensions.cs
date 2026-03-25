@@ -7,6 +7,7 @@ using Runner.Submissions.Module.Api;
 using Runner.Submissions.Module.Application.Interfaces;
 using Runner.Submissions.Module.Application.UseCases.CreateAssignment;
 using Runner.Submissions.Module.Application.UseCases.CreateSubmission;
+using Runner.Submissions.Module.Application.UseCases.GetAssignment;
 using Runner.Submissions.Module.Application.UseCases.GetSubmission;
 using Runner.Submissions.Module.Application.UseCases.GetSubmissionReport;
 using Runner.Submissions.Module.Infrastructure.Database;
@@ -27,6 +28,7 @@ public static class SubmissionsModuleExtensions
 
         // Use-case handlers
         services.AddScoped<CreateAssignmentHandler>();
+        services.AddScoped<GetAssignmentHandler>();
         services.AddScoped<CreateSubmissionHandler>();
         services.AddScoped<GetSubmissionHandler>();
         services.AddScoped<GetSubmissionReportHandler>();

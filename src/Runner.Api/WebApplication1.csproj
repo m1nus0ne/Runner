@@ -7,12 +7,15 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="AspNet.Security.OAuth.GitHub" Version="*" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.*" />
         <PackageReference Include="Scalar.AspNetCore" Version="*" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\Modules\Auth\Runner.Auth.Module\Runner.Auth.Module.csproj" />
+      <ProjectReference Include="..\Modules\Parsers\Runner.Parsers.Module\Runner.Parsers.Module.csproj" />
+      <ProjectReference Include="..\Modules\Runner\Runner.Runner.Module\Runner.Runner.Module.csproj" />
       <ProjectReference Include="..\Modules\Submissions\Runner.Submissions.Module\Runner.Submissions.Module.csproj" />
     </ItemGroup>
 

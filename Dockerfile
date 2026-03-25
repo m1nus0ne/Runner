@@ -9,7 +9,10 @@ WORKDIR /src
 COPY Directory.Build.props ./
 COPY src/Runner.Api/WebApplication1.csproj                                                   src/Runner.Api/
 COPY src/Runner.SharedKernel/Runner.SharedKernel.csproj                                      src/Runner.SharedKernel/
-COPY src/Modules/Submissions/Runner.Submissions.Module/Runner.Submissions.Module.csproj      src/Modules/Submissions/Runner.Submissions.Module/
+COPY src/Modules/Auth/Runner.Auth.Module/Runner.Auth.Module.csproj                            src/Modules/Auth/Runner.Auth.Module/
+COPY src/Modules/Parsers/Runner.Parsers.Module/Runner.Parsers.Module.csproj                   src/Modules/Parsers/Runner.Parsers.Module/
+COPY src/Modules/Runner/Runner.Runner.Module/Runner.Runner.Module.csproj                      src/Modules/Runner/Runner.Runner.Module/
+COPY src/Modules/Submissions/Runner.Submissions.Module/Runner.Submissions.Module.csproj       src/Modules/Submissions/Runner.Submissions.Module/
 
 RUN dotnet restore src/Runner.Api/WebApplication1.csproj
 
