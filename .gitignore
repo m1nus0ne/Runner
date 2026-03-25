@@ -1,0 +1,16 @@
+           ## .NET
+bin/
+obj/
+*.user
+.vs/
+.idea/
+
+## Secrets
+.env
+docker-compose.override.yml
+appsettings.*.Local.json
+
+## OS
+.DS_Store
+Thumbs.db
+

@@ -1,0 +1,48 @@
+services:
+  runner-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=runner;Username=app;Password=${PG_PASS}
+      - GitHub__ClientId=${GITHUB_CLIENT_ID}
+      - GitHub__ClientSecret=${GITHUB_CLIENT_SECRET}
+      - GitLab__BaseUrl=${GITLAB_BASE_URL:-https://gitlab.com}
+      - GitLab__ServiceToken=${GITLAB_TOKEN}
+      - GitLab__WebhookSecret=${GITLAB_WEBHOOK_SECRET}
+      - Outbox__PollingIntervalSeconds=${OUTBOX_INTERVAL:-5}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - internal
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: runner
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: ${PG_PASS}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d runner"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - internal
+
+networks:
+  internal:
+    driver: bridge
+
+volumes:
+  pgdata:
+

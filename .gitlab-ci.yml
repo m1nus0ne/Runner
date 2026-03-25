@@ -1,0 +1,66 @@
+# .gitlab-ci.yml — шаблон для репозитория задания
+#
+# Переменные, которые передаёт Runner API при запуске пайплайна:
+#   STUDENT_REPO   — HTTPS-URL GitHub репозитория студента
+#   STUDENT_BRANCH — ветка студента
+#   SUBMISSION_ID  — UUID отправки (передаётся в вебхук)
+#
+# Секреты CI/CD репозитория задания (настраиваются один раз):
+#   RUNNER_WEBHOOK_URL    — https://<your-runner-api>/webhooks/gitlab
+#   RUNNER_WEBHOOK_SECRET — значение GitLab:WebhookSecret из appsettings
+
+image: mcr.microsoft.com/dotnet/sdk:10.0
+
+variables:
+  STUDENT_REPO:   ""
+  STUDENT_BRANCH: "main"
+  SUBMISSION_ID:  ""
+  DOTNET_NOLOGO:  "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+
+stages:
+  - build
+  - test
+
+# ── 1. Сборка ─────────────────────────────────────────────────────────────────
+build:
+  stage: build
+  script:
+    # Клонируем код студента в папку student/
+    - git clone --branch "$STUDENT_BRANCH" --depth 1 "$STUDENT_REPO" student
+    # Копируем скрытые тесты рядом со студенческим кодом
+    - cp -r tests/ student/tests/
+    # Восстанавливаем зависимости
+    - dotnet restore student/
+  artifacts:
+    paths:
+      - student/
+    expire_in: 1 hour
+  timeout: 3 minutes
+
+# ── 2. Тестирование ───────────────────────────────────────────────────────────
+test:
+  stage: test
+  needs: [build]
+  script:
+    - |
+      dotnet test student/ \
+        --no-restore \
+        --logger "nunit;LogFilePath=TestResult.xml" \
+        --results-directory . \
+        -- NUnit.DefaultTestNamePattern="{m}"
+  after_script:
+    # Отправляем вебхук вручную, если GitLab webhook недоступен локально
+    # (опционально — GitLab сам шлёт webhook при завершении пайплайна)
+    - echo "Pipeline finished. SUBMISSION_ID=$SUBMISSION_ID"
+  artifacts:
+    when: always
+    reports:
+      junit: TestResult.xml      # GitLab показывает результаты в MR
+    paths:
+      - TestResult.xml           # Runner API скачивает этот файл
+    expire_in: 7 days
+  timeout: 5 minutes
+  variables:
+    GIT_STRATEGY: none           # исходники уже в артефактах build-стадии
+
