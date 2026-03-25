@@ -46,7 +46,7 @@ export default function App() {
             </>
           ) : (
             <a
-              href={`${API_BASE}/auth/login?returnUrl=/auth/callback`}
+              href={`${API_BASE}/api/auth/login?returnUrl=/auth/callback`}
               className="btn-header btn-header--login"
             >
               Войти через GitHub

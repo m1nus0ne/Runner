@@ -41,6 +41,20 @@ export interface AuthUser {
   id: string;
   login: string;
   role: string;
+  profileUrl: string | null;
+  hasGitHubToken: boolean;
+}
+
+export interface GitHubRepo {
+  name: string;
+  fullName: string;
+  htmlUrl: string;
+  isPrivate: boolean;
+  defaultBranch: string;
+}
+
+export interface GitHubBranch {
+  name: string;
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
@@ -57,12 +71,17 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   // Auth
-  me: () => request<AuthUser>('/auth/me'),
-  logout: () => request<{ message: string }>('/auth/logout', { method: 'POST' }),
+  me: () => request<AuthUser>('/api/auth/me'),
+  logout: () => request<{ message: string }>('/api/auth/logout', { method: 'POST' }),
+
+  // GitHub proxy
+  getGitHubRepos: () => request<GitHubRepo[]>('/api/auth/github/repos'),
+  getGitHubBranches: (owner: string, repo: string) =>
+    request<GitHubBranch[]>(`/api/auth/github/repos/${owner}/${repo}/branches`),
 
   // Assignments
-  getAssignments: () => request<AssignmentDto[]>('/assignments'),
-  getAssignment: (id: string) => request<AssignmentDto>(`/assignments/${id}`),
+  getAssignments: () => request<AssignmentDto[]>('/api/assignments'),
+  getAssignment: (id: string) => request<AssignmentDto>(`/api/assignments/${id}`),
   createAssignment: (data: {
     title: string;
     gitLabProjectId: number;
@@ -70,7 +89,7 @@ export const api = {
     coverageThreshold?: number | null;
     templateRepoUrl?: string | null;
   }) =>
-    request<{ id: string; link: string }>('/assignments', {
+    request<{ id: string; link: string }>('/api/assignments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -78,13 +97,13 @@ export const api = {
 
   // Submissions
   createSubmission: (data: { assignmentId: string; gitHubUrl: string; branch: string }) =>
-    request<{ id: string }>('/submissions', {
+    request<{ id: string }>('/api/submissions', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     }),
-  getSubmission: (id: string) => request<SubmissionDto>(`/submissions/${id}`),
-  getSubmissionReport: (id: string) => request<SubmissionReportDto>(`/submissions/${id}/report`),
+  getSubmission: (id: string) => request<SubmissionDto>(`/api/submissions/${id}`),
+  getSubmissionReport: (id: string) => request<SubmissionReportDto>(`/api/submissions/${id}/report`),
 };
 
 

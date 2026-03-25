@@ -434,7 +434,9 @@ graph LR
         L["GET /auth/login<br/>🔓 Anonymous<br/>GitHub OAuth"]
         DL["GET /auth/dev-login<br/>🔓 Anonymous<br/>(только dev)"]
         LO["GET /auth/logout<br/>🔒 Authorized"]
-        ME["GET /auth/me<br/>🔒 Authorized"]
+        ME["GET /auth/me<br/>🔒 Authorized<br/>+ profileUrl"]
+        GR["GET /auth/github/repos<br/>🔒 Authorized<br/>Публичные репозитории"]
+        GB["GET /auth/github/repos<br/>/{owner}/{repo}/branches<br/>🔒 Authorized<br/>Ветки репозитория"]
     end
 
     subgraph "Submissions Module: /assignments"

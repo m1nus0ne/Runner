@@ -28,7 +28,7 @@ public static class AuthModuleExtensions
                 opt.Cookie.HttpOnly = true;
                 opt.Cookie.SameSite = SameSiteMode.Lax;
                 opt.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-                opt.LoginPath = "/auth/login";
+                opt.LoginPath = "/api/auth/login";
                 opt.Events.OnRedirectToLogin = ctx =>
                 {
                     ctx.Response.StatusCode = 401;
@@ -54,22 +54,40 @@ public static class AuthModuleExtensions
                 opt.ClientId     = githubClientId;
                 opt.ClientSecret = githubClientSecret;
                 opt.Scope.Add("read:user");
-                opt.CallbackPath = "/auth/github/callback";
+                opt.Scope.Add("public_repo");
+                opt.SaveTokens   = true;
+                opt.CallbackPath = "/api/auth/github/callback";
 
                 opt.Events.OnCreatingTicket = ctx =>
                 {
                     var login = ctx.User.GetProperty("login").GetString() ?? string.Empty;
                     var id    = ctx.User.GetProperty("id").GetInt64();
+                    var profileUrl = ctx.User.GetProperty("html_url").GetString()
+                                     ?? $"https://github.com/{login}";
 
                     var role = adminLogins.Contains(login) ? "Admin" : "Student";
 
                     ctx.Identity?.AddClaim(new Claim("github_login", login));
                     ctx.Identity?.AddClaim(new Claim("github_id",    id.ToString()));
+                    ctx.Identity?.AddClaim(new Claim("github_profile_url", profileUrl));
                     ctx.Identity?.AddClaim(new Claim(ClaimTypes.Role, role));
+
+                    // Сохраняем access token для вызовов GitHub API (repos, branches)
+                    if (!string.IsNullOrEmpty(ctx.AccessToken))
+                        ctx.Identity?.AddClaim(new Claim("github_access_token", ctx.AccessToken));
+
                     return Task.CompletedTask;
                 };
             });
         }
+
+        // ── HttpClient for GitHub API proxy ──────────────────────────────────
+        services.AddHttpClient("GitHubApi", client =>
+        {
+            client.BaseAddress = new Uri("https://api.github.com");
+            client.DefaultRequestHeaders.Add("Accept", "application/vnd.github+json");
+            client.DefaultRequestHeaders.Add("User-Agent", "Runner-App");
+        });
 
         // ── Authorization policies ───────────────────────────────────────────
         services.AddAuthorization(opt =>

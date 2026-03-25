@@ -216,6 +216,21 @@ a:hover { text-decoration: underline; }
 .submit-form input:focus {
   border-color: var(--accent);
 }
+.submit-form select {
+  padding: 0.7rem 1rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.2s;
+  appearance: none;
+  cursor: pointer;
+}
+.submit-form select:focus {
+  border-color: var(--accent);
+}
 .submit-form button {
   width: 100%;
   padding: 0.8rem;
@@ -454,4 +469,20 @@ a:hover { text-decoration: underline; }
 }
 .copy-btn:hover {
   background: var(--accent);
+}
+
+/* Link-style button */
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 1rem;
+  text-decoration: underline;
+  font-family: inherit;
+}
+.btn-link:hover {
+  color: var(--accent-hover);
 }

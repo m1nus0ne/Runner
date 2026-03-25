@@ -68,9 +68,10 @@ app.UseExceptionHandler(errApp => errApp.Run(async ctx =>
 }));
 
 // ── Module endpoints ─────────────────────────────────────────────────────────
-app.MapAuthModuleEndpoints(app.Environment);
-app.MapSubmissionsModuleEndpoints();
-app.MapRunnerModuleEndpoints();
+var api = app.MapGroup("/api");
+api.MapAuthModuleEndpoints(app.Environment);
+api.MapSubmissionsModuleEndpoints();
+api.MapRunnerModuleEndpoints();
 
 // ── Migrations on startup ────────────────────────────────────────────────────
 await app.Services.MigrateSubmissionsDbAsync();
