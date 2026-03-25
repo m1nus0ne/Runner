@@ -14,41 +14,37 @@ public static class AuthEndpoints
         this IEndpointRouteBuilder app,
         IHostEnvironment environment)
     {
-        // GitHub OAuth login
-        app.MapGet("/auth/login", () =>
+        // GitHub OAuth login — принимает returnUrl для редиректа после авторизации
+        app.MapGet("/auth/login", (string? returnUrl) =>
                 Results.Challenge(
-                    new AuthenticationProperties { RedirectUri = "/" },
+                    new AuthenticationProperties
+                    {
+                        RedirectUri = returnUrl ?? "/"
+                    },
                     ["GitHub"]))
             .AllowAnonymous();
 
-        // Dev-only: hard-coded login without OAuth
+        // Dev-only: быстрый вход без OAuth
         if (environment.IsDevelopment())
         {
-            app.MapGet("/auth/dev-login", async (HttpContext ctx,
-                string login = "dev-user",
-                string role  = "Admin") =>
+            app.MapGet("/auth/dev-login/student", async (HttpContext ctx) =>
             {
-                var claims = new List<Claim>
-                {
-                    new(ClaimTypes.NameIdentifier, "0"),
-                    new(ClaimTypes.Name,           login),
-                    new(ClaimTypes.Role,           role),
-                    new("github_login",            login),
-                    new("github_id",               "0"),
-                };
-                var identity  = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-                var principal = new ClaimsPrincipal(identity);
+                await SignInDev(ctx, "dev-student", "Student");
+                return Results.Ok(new { message = "Signed in as 'dev-student' with role 'Student'." });
+            }).AllowAnonymous();
 
-                await ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
-                return Results.Ok(new { message = $"Signed in as '{login}' with role '{role}'." });
+            app.MapGet("/auth/dev-login/admin", async (HttpContext ctx) =>
+            {
+                await SignInDev(ctx, "dev-admin", "Admin");
+                return Results.Ok(new { message = "Signed in as 'dev-admin' with role 'Admin'." });
             }).AllowAnonymous();
         }
 
         // Logout
-        app.MapGet("/auth/logout", async ctx =>
+        app.MapPost("/auth/logout", async (HttpContext ctx) =>
         {
             await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-            ctx.Response.Redirect("/");
+            return Results.Ok(new { message = "Signed out." });
         }).RequireAuthorization();
 
         // Current user info
@@ -60,6 +56,21 @@ public static class AuthEndpoints
         })).RequireAuthorization();
 
         return app;
+    }
+
+    private static async Task SignInDev(HttpContext ctx, string login, string role)
+    {
+        var claims = new List<Claim>
+        {
+            new(ClaimTypes.NameIdentifier, "0"),
+            new(ClaimTypes.Name,           login),
+            new(ClaimTypes.Role,           role),
+            new("github_login",            login),
+            new("github_id",               "0"),
+        };
+        var identity  = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var principal = new ClaimsPrincipal(identity);
+        await ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
     }
 }
 

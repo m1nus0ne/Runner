@@ -58,6 +58,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 export const api = {
   // Auth
   me: () => request<AuthUser>('/auth/me'),
+  logout: () => request<{ message: string }>('/auth/logout', { method: 'POST' }),
 
   // Assignments
   getAssignments: () => request<AssignmentDto[]>('/assignments'),

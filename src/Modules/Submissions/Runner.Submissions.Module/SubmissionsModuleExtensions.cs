@@ -28,8 +28,8 @@ public static class SubmissionsModuleExtensions
 
         // Use-case handlers
         services.AddScoped<CreateAssignmentHandler>();
-        services.AddScoped<GetAssignmentHandler>();
         services.AddScoped<CreateSubmissionHandler>();
+        services.AddScoped<GetAssignmentHandler>();
         services.AddScoped<GetSubmissionHandler>();
         services.AddScoped<GetSubmissionReportHandler>();
 

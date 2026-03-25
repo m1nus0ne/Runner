@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.HttpOverrides;
 using Scalar.AspNetCore;
 using Runner.SharedKernel;
 using Runner.Auth.Module;
@@ -43,6 +44,12 @@ if (app.Environment.IsDevelopment())
         opt.DefaultHttpClient = new(ScalarTarget.CSharp, ScalarClient.HttpClient);
     });
 }
+
+// ── Forwarded headers (behind nginx) ─────────────────────────────────────────
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
 
 app.UseAuthentication();
 app.UseAuthorization();
