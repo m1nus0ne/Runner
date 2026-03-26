@@ -10,10 +10,15 @@ import { api, type AuthUser } from './api';
 import './App.css';
 
 const API_BASE = import.meta.env.VITE_API_URL ?? '';
+const IS_DEV = true;
 
 export default function App() {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const refreshUser = () => {
+    api.me().then(setUser).catch(() => setUser(null));
+  };
 
   useEffect(() => {
     api.me()
@@ -27,6 +32,13 @@ export default function App() {
       await api.logout();
     } catch { /* ignore */ }
     setUser(null);
+  };
+
+  const handleDevLogin = async (role: 'student' | 'admin') => {
+    try {
+      await fetch(`${API_BASE}/api/auth/dev-login/${role}`, { credentials: 'include' });
+      refreshUser();
+    } catch { /* ignore */ }
   };
 
   return (
@@ -53,14 +65,36 @@ export default function App() {
               <button className="btn-header btn-header--logout" onClick={handleLogout}>
                 Выйти
               </button>
+              {IS_DEV && (
+                <>
+                  <button className="btn-header btn-header--dev" onClick={() => handleDevLogin('student')}>
+                    Dev Student
+                  </button>
+                  <button className="btn-header btn-header--dev" onClick={() => handleDevLogin('admin')}>
+                    Dev Admin
+                  </button>
+                </>
+              )}
             </>
           ) : (
-            <a
-              href={`${API_BASE}/api/auth/login?returnUrl=/auth/callback`}
-              className="btn-header btn-header--login"
-            >
-              Войти через GitHub
-            </a>
+            <>
+              <a
+                href={`${API_BASE}/api/auth/login?returnUrl=/auth/callback`}
+                className="btn-header btn-header--login"
+              >
+                Войти через GitHub
+              </a>
+              {IS_DEV && (
+                <>
+                  <button className="btn-header btn-header--dev" onClick={() => handleDevLogin('student')}>
+                    Dev Student
+                  </button>
+                  <button className="btn-header btn-header--dev" onClick={() => handleDevLogin('admin')}>
+                    Dev Admin
+                  </button>
+                </>
+              )}
+            </>
           )}
         </div>
       </header>

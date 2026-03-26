@@ -46,7 +46,14 @@ export interface TestGroupResultDto {
   passed: number;
   failed: number;
   errorType: string | null;
-  errorMessage: string | null;
+  failedTests: FailedTestDetailDto[] | null;
+}
+
+export interface FailedTestDetailDto {
+  testName: string;
+  message: string;
+  expected: string | null;
+  actual: string | null;
 }
 
 export interface AuthUser {

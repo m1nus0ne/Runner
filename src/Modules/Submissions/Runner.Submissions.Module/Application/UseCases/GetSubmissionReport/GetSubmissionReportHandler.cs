@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Runner.SharedKernel;
 using Runner.Submissions.Module.Application.Interfaces;
@@ -6,6 +7,12 @@ namespace Runner.Submissions.Module.Application.UseCases.GetSubmissionReport;
 
 internal sealed class GetSubmissionReportHandler(ISubmissionsDbContext db)
 {
+    private static readonly JsonSerializerOptions JsonOpts = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        PropertyNameCaseInsensitive = true
+    };
+
     public async Task<SubmissionReportDto> HandleAsync(GetSubmissionReportQuery query, CancellationToken ct = default)
     {
         var submission = await db.Submissions
@@ -21,7 +28,12 @@ internal sealed class GetSubmissionReportHandler(ISubmissionsDbContext db)
             throw new NotFoundException($"Report for submission {query.SubmissionId} is not ready yet.");
 
         var groups = submission.CheckResult.TestGroupResults
-            .Select(g => new TestGroupResultDto(g.GroupName, g.Passed, g.Failed, g.ErrorType, g.ErrorMessage))
+            .Select(g => new TestGroupResultDto(
+                g.GroupName,
+                g.Passed,
+                g.Failed,
+                g.ErrorType,
+                ParseFailedTests(g.ErrorMessage)))
             .ToList();
 
         return new SubmissionReportDto(
@@ -31,6 +43,27 @@ internal sealed class GetSubmissionReportHandler(ISubmissionsDbContext db)
             submission.CheckResult.PassedTests,
             submission.CheckResult.FailedTests,
             groups);
+    }
+
+    /// <summary>
+    /// Пробует десериализовать ErrorMessage как JSON-массив упавших тестов.
+    /// Если не JSON — возвращает один элемент с message = rawString.
+    /// </summary>
+    private static IReadOnlyList<FailedTestDetailDto>? ParseFailedTests(string? errorMessage)
+    {
+        if (string.IsNullOrWhiteSpace(errorMessage))
+            return null;
+
+        try
+        {
+            var list = JsonSerializer.Deserialize<List<FailedTestDetailDto>>(errorMessage, JsonOpts);
+            return list is { Count: > 0 } ? list : null;
+        }
+        catch
+        {
+            // Legacy plain-text error → wrap as single entry
+            return [new FailedTestDetailDto("—", errorMessage, null, null)];
+        }
     }
 }
 

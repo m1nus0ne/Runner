@@ -12,7 +12,7 @@ internal sealed class TestGroupResultConfiguration : IEntityTypeConfiguration<Te
         builder.HasKey(tg => tg.Id);
         builder.Property(tg => tg.GroupName).HasMaxLength(200).IsRequired();
         builder.Property(tg => tg.ErrorType).HasConversion<string>().HasMaxLength(50);
-        builder.Property(tg => tg.ErrorMessage).HasMaxLength(2000);
+        builder.Property(tg => tg.ErrorMessage).HasMaxLength(8000);
     }
 }
 

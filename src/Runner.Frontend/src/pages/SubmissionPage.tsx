@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { api, type SubmissionDto, type SubmissionReportDto } from '../api';
+import { api, type SubmissionDto, type SubmissionReportDto, type TestGroupResultDto, type FailedTestDetailDto } from '../api';
 
 const STATUS_LABELS: Record<string, string> = {
   Pending:    'Ожидание',
@@ -20,6 +20,99 @@ const ERROR_TYPE_LABELS: Record<string, string> = {
   InterfaceNotFound: 'Нет реализации интерфейса',
 };
 
+/** Пробует распарсить строку как JSON и вернуть pretty-printed. */
+function tryPrettyJson(value: string | null): { isJson: boolean; formatted: string } {
+  if (!value) return { isJson: false, formatted: value ?? '' };
+  const trimmed = value.trim();
+  if ((trimmed.startsWith('{') && trimmed.endsWith('}')) ||
+      (trimmed.startsWith('[') && trimmed.endsWith(']'))) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      return { isJson: true, formatted: JSON.stringify(parsed, null, 2) };
+    } catch { /* not JSON */ }
+  }
+  return { isJson: false, formatted: value };
+}
+
+/** Компонент для рендера expected/actual значения — если JSON, рисуем красиво */
+function ValueBlock({ label, value, className }: { label: string; value: string | null; className?: string }) {
+  if (!value) return null;
+  const { isJson, formatted } = tryPrettyJson(value);
+  return (
+    <div className={`value-block ${className ?? ''}`}>
+      <span className="value-block__label">{label}</span>
+      {isJson ? (
+        <pre className="value-block__json">{formatted}</pre>
+      ) : (
+        <code className="value-block__code">{formatted}</code>
+      )}
+    </div>
+  );
+}
+
+/** Модалка с деталями упавших тестов группы */
+function FailedTestsModal({
+  group,
+  onClose,
+}: {
+  group: TestGroupResultDto;
+  onClose: () => void;
+}) {
+  const tests = group.failedTests ?? [];
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal modal--wide" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>{group.groupName}</h2>
+          <button className="modal-close" onClick={onClose}>&times;</button>
+        </div>
+        <div className="modal-body">
+          {group.errorType && (
+            <p className="ftm-error-type">
+              {ERROR_TYPE_LABELS[group.errorType] ?? group.errorType}
+            </p>
+          )}
+          <p className="ftm-summary">
+            Пройдено: <strong className="text-green">{group.passed}</strong>
+            {' / '}
+            Провалено: <strong className="text-red">{group.failed}</strong>
+          </p>
+
+          {tests.length === 0 ? (
+            <p className="hint">Нет структурированных данных об ошибках.</p>
+          ) : (
+            <div className="ftm-tests">
+              {tests.map((t, i) => (
+                <FailedTestCard key={i} test={t} />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FailedTestCard({ test }: { test: FailedTestDetailDto }) {
+  const hasExpectedActual = test.expected != null || test.actual != null;
+
+  return (
+    <div className="ftm-card">
+      <h4 className="ftm-card__name">{test.testName}</h4>
+
+      {hasExpectedActual ? (
+        <div className="ftm-diff">
+          <ValueBlock label="Ожидалось" value={test.expected} className="value-block--expected" />
+          <ValueBlock label="Получено" value={test.actual} className="value-block--actual" />
+        </div>
+      ) : (
+        <pre className="ftm-card__message">{test.message}</pre>
+      )}
+    </div>
+  );
+}
+
 export default function SubmissionPage() {
   const { id } = useParams<{ id: string }>();
 
@@ -27,6 +120,7 @@ export default function SubmissionPage() {
   const [report, setReport] = useState<SubmissionReportDto | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [selectedGroup, setSelectedGroup] = useState<TestGroupResultDto | null>(null);
 
   const isTerminal = (s: string) =>
     ['Passed', 'Failed', 'Error', 'Timeout'].includes(s);
@@ -124,22 +218,40 @@ export default function SubmissionPage() {
                 <th>Пройдено</th>
                 <th>Провалено</th>
                 <th>Тип ошибки</th>
-                <th>Сообщение</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
-              {report.groups.map((g, i) => (
-                <tr key={i} className={g.failed > 0 ? 'row--failed' : 'row--passed'}>
-                  <td>{g.groupName}</td>
-                  <td>{g.passed}</td>
-                  <td>{g.failed}</td>
-                  <td>{g.errorType ? (ERROR_TYPE_LABELS[g.errorType] ?? g.errorType) : '—'}</td>
-                  <td className="error-msg">{g.errorMessage ?? '—'}</td>
-                </tr>
-              ))}
+              {report.groups.map((g, i) => {
+                const hasFailed = g.failed > 0;
+                return (
+                  <tr
+                    key={i}
+                    className={`${hasFailed ? 'row--failed' : 'row--passed'} ${hasFailed ? 'row--clickable' : ''}`}
+                    onClick={() => hasFailed && setSelectedGroup(g)}
+                  >
+                    <td>{g.groupName}</td>
+                    <td>{g.passed}</td>
+                    <td>{g.failed}</td>
+                    <td>{g.errorType ? (ERROR_TYPE_LABELS[g.errorType] ?? g.errorType) : '—'}</td>
+                    <td>
+                      {hasFailed && (
+                        <span className="btn-sm">Подробнее →</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
+      )}
+
+      {selectedGroup && (
+        <FailedTestsModal
+          group={selectedGroup}
+          onClose={() => setSelectedGroup(null)}
+        />
       )}
     </div>
   );

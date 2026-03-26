@@ -15,5 +15,11 @@ public record TestGroupResultDto(
     int Passed,
     int Failed,
     ErrorType? ErrorType,
-    string? ErrorMessage);
+    IReadOnlyList<FailedTestDetailDto>? FailedTests);
+
+public record FailedTestDetailDto(
+    string TestName,
+    string Message,
+    string? Expected,
+    string? Actual);
 

@@ -168,8 +168,8 @@ namespace Runner.Submissions.Module.Infrastructure.Database.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("ErrorMessage")
-                        .HasMaxLength(2000)
-                        .HasColumnType("character varying(2000)");
+                        .HasMaxLength(8000)
+                        .HasColumnType("character varying(8000)");
 
                     b.Property<string>("ErrorType")
                         .HasMaxLength(50)
