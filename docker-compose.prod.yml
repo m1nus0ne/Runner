@@ -43,7 +43,7 @@ services:
     container_name: runner-api
     restart: unless-stopped
     environment:
-      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_ENVIRONMENT={STAGE}
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__Default=Host=postgres;Port=5432;Database=runner;Username=app;Password=${PG_PASS}
       - GitHub__ClientId=${GITHUB_CLIENT_ID}
