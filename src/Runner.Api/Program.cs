@@ -45,11 +45,16 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-// ── Forwarded headers (behind nginx) ─────────────────────────────────────────
-app.UseForwardedHeaders(new ForwardedHeadersOptions
+// ── Forwarded headers (behind nginx + Traefik in Docker) ─────────────────────
+// KnownProxies/KnownNetworks очищаем, чтобы доверять nginx внутри Docker-сети
+// (его IP — 172.x.x.x, не входит в дефолтный доверенный список 127.0.0.1)
+var forwardedOptions = new ForwardedHeadersOptions
 {
-    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
-});
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+};
+forwardedOptions.KnownIPNetworks.Clear();
+forwardedOptions.KnownProxies.Clear();
+app.UseForwardedHeaders(forwardedOptions);
 
 app.UseAuthentication();
 app.UseAuthorization();
