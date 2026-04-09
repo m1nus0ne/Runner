@@ -44,7 +44,7 @@ public static class AuthModuleExtensions
         if (!string.IsNullOrWhiteSpace(githubClientId) &&
             !string.IsNullOrWhiteSpace(githubClientSecret))
         {
-            // Список GitHub-логинов с ролью Admin (из конфига "GitHub:Admins": "login1,login2")
+            //TODO выпильть
             var adminLogins = (configuration["GitHub:Admins"] ?? "")
                 .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                 .ToHashSet(StringComparer.OrdinalIgnoreCase);

@@ -5,10 +5,16 @@ obj/
 .vs/
 .idea/
 
-## Secrets
+## Secrets & local config
 .env
 docker-compose.override.yml
-appsettings.*.Local.json
+appsettings.*.json
+!appsettings.json
+Properties/launchSettings.json
+*.http
+
+## Documentation & reports
+report/
 
 ## OS
 .DS_Store
