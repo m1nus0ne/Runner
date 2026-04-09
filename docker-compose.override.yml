@@ -1,0 +1,63 @@
+# dev-переопределения — не коммитить в git
+services:
+  runner-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - runner-api
+    restart: unless-stopped
+    networks:
+      - internal
+
+  runner-api:
+    env_file:
+      - path: .env
+        required: false   # не падать если .env нет
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=runner;Username=app;Password=devpassword
+      - GitHub__ClientId=${GITHUB_CLIENT_ID}
+      - GitHub__ClientSecret=${GITHUB_CLIENT_SECRET}
+      - GitHub__Admins=${GITHUB_ADMINS:-}
+      - GitLab__BaseUrl=${GITLAB_BASE_URL:-https://gitlab.com}
+      - GitLab__ServiceToken=${GITLAB_TOKEN}
+      - GitLab__WebhookSecret=dev-webhook-secret
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - internal
+
+  postgres:
+    image: postgres:17-alpine
+    ports:
+      - "5432:5432"   # открыть наружу для локальной разработки
+    environment:
+      POSTGRES_DB: runner
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: devpassword
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d runner"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+    networks:
+      - internal
+
+networks:
+  internal:
+    driver: bridge
+
+volumes:
+  pgdata:
+
