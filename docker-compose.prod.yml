@@ -1,0 +1,89 @@
+# Production compose для деплоя через Portainer + Traefik
+# Переменные окружения задаются в Portainer → Stacks → Env vars
+# (или в .env рядом с файлом):
+#   DOMAIN            - домен, например runner.godbless52.ru
+#   PG_PASS           - пароль postgres
+#   GITHUB_CLIENT_ID
+#   GITHUB_CLIENT_SECRET
+#   GITHUB_ADMINS     - логины через запятую (опционально)
+#   GITLAB_BASE_URL   - по умолчанию https://gitlab.com
+#   GITLAB_TOKEN
+#   GITLAB_WEBHOOK_SECRET
+
+services:
+  runner-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: runner-frontend
+    restart: unless-stopped
+    depends_on:
+      - runner-api
+    networks:
+      - internal
+      - traefik-network
+    labels:
+      - "traefik.enable=true"
+      # HTTP → редирект на HTTPS
+      - "traefik.http.routers.runner-http.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.runner-http.entrypoints=web"
+      - "traefik.http.routers.runner-http.middlewares=runner-https-redirect"
+      - "traefik.http.middlewares.runner-https-redirect.redirectscheme.scheme=https"
+      # HTTPS
+      - "traefik.http.routers.runner.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.runner.entrypoints=websecure"
+      - "traefik.http.routers.runner.tls=true"
+      - "traefik.http.routers.runner.tls.certresolver=letsencrypt"
+      - "traefik.http.services.runner.loadbalancer.server.port=80"
+
+  runner-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: runner-api
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__Default=Host=postgres;Port=5432;Database=runner;Username=app;Password=${PG_PASS}
+      - GitHub__ClientId=${GITHUB_CLIENT_ID}
+      - GitHub__ClientSecret=${GITHUB_CLIENT_SECRET}
+      - GitHub__Admins=${GITHUB_ADMINS:-}
+      - GitLab__BaseUrl=${GITLAB_BASE_URL:-https://gitlab.com}
+      - GitLab__ServiceToken=${GITLAB_TOKEN}
+      - GitLab__WebhookSecret=${GITLAB_WEBHOOK_SECRET}
+      - Outbox__PollingIntervalSeconds=${OUTBOX_INTERVAL:-5}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - internal
+    # Порт НЕ открываем наружу — доступен только через nginx фронтенда
+
+  postgres:
+    image: postgres:17-alpine
+    container_name: runner-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: runner
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: ${PG_PASS}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d runner"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - internal
+
+networks:
+  internal:
+    driver: bridge
+  traefik-network:
+    external: true   # сеть уже существует — создана Traefik-ом
+
+volumes:
+  pgdata:
+
