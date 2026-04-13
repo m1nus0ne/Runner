@@ -9,6 +9,7 @@
 #   GITLAB_BASE_URL   - по умолчанию https://gitlab.com
 #   GITLAB_TOKEN
 #   GITLAB_WEBHOOK_SECRET
+#   STAGE               - Production (по умолчанию) или Development
 
 services:
   runner-frontend:
@@ -43,7 +44,7 @@ services:
     container_name: runner-api
     restart: unless-stopped
     environment:
-      - ASPNETCORE_ENVIRONMENT={STAGE}
+      - ASPNETCORE_ENVIRONMENT=${STAGE:-Production}
       - ASPNETCORE_URLS=http://+:8080
       - ConnectionStrings__Default=Host=postgres;Port=5432;Database=runner;Username=app;Password=${PG_PASS}
       - GitHub__ClientId=${GITHUB_CLIENT_ID}
